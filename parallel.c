@@ -16,6 +16,7 @@ struct args_struct{
 
 void end(clock_t begin)
 {
+    /*Prints total time given start*/
     clock_t end = clock();
     double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
     printf("Time: %.2f\n", time_spent);
@@ -23,8 +24,8 @@ void end(clock_t begin)
 }
 
 char** loadInfo(char* path){
+    /*loads content from file into list of words*/
     int index = 0;
-
     char** info = (char **)malloc(sizeof(char *));
     char line[50];
     
@@ -43,19 +44,19 @@ char** loadInfo(char* path){
 	return info;
 }
 
-int search(char* word, char* password){
-    if(strcmp(word, password) == 0){
+int compare(char* word, char* password){
+    /*Compare our guess with the real password*/
+    if (strcmp(word, password) == 0){
         printf("\nFound! (%s)\n", password);
         return 1;
     }
     return 0;
 }
 
-int search_all(char** words, char* password){
+int compare_all(char** words, char* password){
     int i;
     for (i = 0; i < _msize(words) / 8 - 1; i++){
-        if (strcmp(words[i], password) == 0){
-            printf("\nFound! (%s)\n", password);
+        if (compare(words[i], password)){
             return 1;
         }
     }return 0;
@@ -71,7 +72,7 @@ char** build_words(char** words, char** extras, char sep[1], char* password, clo
             strcpy(result[k], words[i]);
             strcat(result[k], sep);
             strcat(result[k], extras[j]);
-            if(search(result[k], password)) end(begin);
+            if(compare(result[k], password)) end(begin);
             k++;
             result = (char **)realloc(result, sizeof(char *) * (k + 1));
         }
@@ -116,8 +117,6 @@ void* build_words_thread(void *arguments)
     char **all, **new_all;
     all = build_words((args)->words1, (args)->words2, (args)->sep, (args)->password, args->begin);
 
-    printf("finished first load -> %s", (args)->sep);
-
     new_all = build_words(all, (args)->words2, "-", (args)->password, args->begin);
     new_all = build_words(all, (args)->words2, ".", (args)->password, args->begin);
     new_all = build_words(all, (args)->words2, "_", (args)->password, args->begin);
@@ -137,7 +136,7 @@ int main(int argc, char* argv[]){
     clock_t begin;begin = clock();
 
     if(argc < 2){
-        printf("  input password please (./executable password)");
+        printf("\tinput password please");
         return 0;
     }else{
         password = malloc(sizeof(char) * strlen(argv[1]));
@@ -151,8 +150,8 @@ int main(int argc, char* argv[]){
     
     
 
-    if(search_all(common, password)) end(begin);
-    if(search_all(victim, password)) end(begin);
+    if(compare_all(common, password)) end(begin);
+    if(compare_all(victim, password)) end(begin);
 
     victim = expand(victim);
     
