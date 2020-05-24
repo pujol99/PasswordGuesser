@@ -4,7 +4,6 @@
 #include <string.h>
 #include <time.h>
 
-
 #define NTHREADS 4
 
 struct args_struct{
