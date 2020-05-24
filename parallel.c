@@ -173,10 +173,8 @@ int main(int argc, char* argv[]){
     args3.begin = begin;
     args4.begin = begin;
 
-    //TIME: 1'10"
     if(argc < 3){
-        printf("Thread mode\n");
-
+        //Parallel mode
         strcpy(args1.sep, "");
         pthread_create(&threads[0], NULL, build_words_thread, (void *)&args1);
 
