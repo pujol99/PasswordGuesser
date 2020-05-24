@@ -54,6 +54,7 @@ int compare(char* word, char* password){
 }
 
 int compare_all(char** words, char* password){
+    /*Compare list of guesses with the real password*/
     int i;
     for (i = 0; i < _msize(words) / 8 - 1; i++){
         if (compare(words[i], password)){
@@ -63,6 +64,7 @@ int compare_all(char** words, char* password){
 }
 
 char** build_words(char** words, char** extras, char sep[1], char* password, clock_t begin){
+    /*given two lists concatenate each pair of words with a separator*/
     int i, j, k = 0;
     char **result = (char **)malloc(sizeof(char *));
 
@@ -80,6 +82,7 @@ char** build_words(char** words, char** extras, char sep[1], char* password, clo
 }
 
 char** expand(char** words){
+    /*Expand a word list using multiple methods*/
     int i, c, size = _msize(words) / 8 - 1, k = size;
     char** result = (char **)realloc(words, sizeof(char *) * (k + 1));
 
@@ -105,14 +108,15 @@ char** expand(char** words){
 }
 
 void print_word_list(char** words){
+    /*Print a word list*/
     int i, size = _msize(words) / 8 - 1;
     for (i = 0; i < size; i++){
-        printf("-> %s\n", words[i]);
+        printf("%s\n", words[i]);
     }
 }
 
-void* build_words_thread(void *arguments)
-{
+void* build_words_thread(void *arguments){
+    /**/
     struct args_struct *args = (struct args_struct *)arguments;
     char **all, **new_all;
     all = build_words((args)->words1, (args)->words2, (args)->sep, (args)->password, args->begin);
@@ -128,11 +132,14 @@ int main(int argc, char* argv[]){
     char* password;
     char* fast;
     unsigned int i;
-    struct args_struct args1;
-    struct args_struct args2;
-    struct args_struct args3;
-    struct args_struct args4;
+    struct args_struct args[4];
     pthread_t threads[NTHREADS];
+    char separators[4][1];
+    strcpy(separators[0], "");
+    strcpy(separators[1], ".");
+    strcpy(separators[2], "-");
+    strcpy(separators[3], "_");
+
     clock_t begin;begin = clock();
 
     if(argc < 2){
@@ -148,43 +155,25 @@ int main(int argc, char* argv[]){
     extras = loadInfo("files/extras.txt");
     victim = loadInfo("files/victim.txt");
     
-    
-
     if(compare_all(common, password)) end(begin);
     if(compare_all(victim, password)) end(begin);
 
     victim = expand(victim);
     
-    (args1).words1 = victim;
-    (args1).words2 = extras;
-    (args1).password = password;
-    (args2).words1 = victim;
-    (args2).words2 = extras;
-    (args2).password = password;
-    (args3).words1 = victim;
-    (args3).words2 = extras;
-    (args3).password = password;
-    (args4).words1 = victim;
-    (args4).words2 = extras;
-    (args4).password = password;
-    args1.begin = begin;
-    args2.begin = begin;
-    args3.begin = begin;
-    args4.begin = begin;
+    for(i = 0; i < NTHREADS; i++){
+        args[i].words1 = victim;
+        args[i].words2 = extras;
+        args[i].password = password;
+        args[i].begin = begin;
+    }
+    
 
     if(argc < 3){
         //Parallel mode
-        strcpy(args1.sep, "");
-        pthread_create(&threads[0], NULL, build_words_thread, (void *)&args1);
-
-        strcpy(args2.sep, ".");
-        pthread_create(&threads[1], NULL, build_words_thread, (void *)&args2);
-
-        strcpy(args3.sep, "-");
-        pthread_create(&threads[2], NULL, build_words_thread, (void *)&args3);
-
-        strcpy(args4.sep, "_");
-        pthread_create(&threads[3], NULL, build_words_thread, (void *)&args4); 
+        for(i = 0; i < NTHREADS; i++){
+            strcpy(args[i].sep, separators[i]);
+            pthread_create(&threads[i], NULL, build_words_thread, (void *)&args[i]);
+        } 
 
         for (i = 0; i < NTHREADS; i++)
             pthread_join(threads[i], NULL);
@@ -218,15 +207,8 @@ int main(int argc, char* argv[]){
 
     clock_t end = clock();
     double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-    printf("Time: %.2f\n", time_spent);
+    printf("Not found, time: %.2f\n", time_spent);
     exit(0);
-    
-    free(all);
-    free(common);
-    free(victim);
-    free(extras);
-
-    
 
     return 0;
 }
